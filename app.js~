@@ -1,0 +1,80 @@
+var express    = require("express"),
+    app        = express(),
+    bodyParser = require("body-parser"),
+    mongoose   = require("mongoose");
+
+mongoose.connect("mongodb://localhost/yelp_camp");
+
+var campGroundSch = mongoose.Schema({
+	name : String,
+	image_url : String,
+	description : String
+    });
+
+var Campground = mongoose.model("Campground", campGroundSch);
+
+ 
+
+app.use(bodyParser.urlencoded({extended : true}));
+
+app.set("view engine", "ejs");
+
+app.get("/", function(req,res){
+	res.render("landing");
+    });
+
+app.get("/index", function(req,res){
+	Campground.find({}, function(err, campgrounds){
+		if(err){
+		    console.log(err);
+		}
+		else {
+		    res.render("index", {campgrounds: campgrounds});    
+		}
+	    });
+    });
+
+app.post("/campgrounds", function(req,res){
+	//get data from form and andd to campgrounds array
+	var name = req.body.name;
+	var image = req.body.image;
+	var description = req.body.description;
+	var campground = {
+	    name : name,
+	    image_url : image,
+	    description : description
+	}
+	Campground.create(campground, function(err, dbCampGround){
+		if(err){
+		    console.log("There was an error while attempting to save the campground collection. It was not saved!!");
+		}
+		else {
+		    console.log("A new campground collection has been created");
+		    console.log(dbCampGround);
+		    res.redirect("/index");
+		}
+	    });
+	//redirect back to campgrounds page
+	//campgrounds.push(newCampground);
+    });
+
+app.get("/campgrounds/new", function(req,res){
+	res.render("new");
+    });
+
+app.get("/campgrounds/:id", function(req,res){
+	//console.log("THIS WILL BE THE SHOW PAGE SOME DAY!!");
+	Campground.findById(req.params.id, function(err, foundCampGround){
+		if(err){
+		    console.log(err);
+		}
+		else {
+		    res.render("show", {campground : foundCampGround});
+		}
+	    });
+    });
+
+
+app.listen(8001, process.env.IP, function(){
+        console.log("YelpCamp Server has started!!");
+    });
